@@ -12,6 +12,7 @@
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <openhtml.version>0.0.1-RC9</openhtml.version>
   </properties>
 
   <dependencies>
@@ -29,6 +30,32 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- BEGIN pdf dependencies -->
+
+    <dependency>
+      <!-- ALWAYS required. -->
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-core</artifactId>
+      <version>${openhtml.version}</version>
+    </dependency>
+
+    <dependency>
+      <!-- Required for PDF output. -->
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-pdfbox</artifactId>
+      <version>${openhtml.version}</version>
+    </dependency>
+
+    <dependency>
+      <!-- Optional, leave out if you do not need HTML5 parsing support. -->
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-jsoup-dom-converter</artifactId>
+      <version>${openhtml.version}</version>
+    </dependency>
+
+    <!-- END pdf dependencies -->
+
   </dependencies>
 
   <build>
