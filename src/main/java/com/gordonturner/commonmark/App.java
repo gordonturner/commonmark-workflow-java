@@ -22,7 +22,8 @@ public class App {
   public final static String PDF_EXTENSION = ".pdf";
   
   // https://raw.githubusercontent.com/sindresorhus/github-markdown-css/gh-pages/github-markdown.css
-  public final static String GITHUB_MARKDOWN_CSS_FILE = "github-markdown.css" ;
+  public final static String GITHUB_MARKDOWN_CSS_FILE = "github-markdown.css";
+  public final static String GITHUB_MARKDOWN_CSS_CUSTOM_FILE = "github-markdown-custom.css";
   
   public static void main(String[] args)
   {
@@ -194,23 +195,28 @@ public class App {
    */
   private static String createGithubMarkdownHtmlHeader()
   {
-    return createHtmlHeader(GITHUB_MARKDOWN_CSS_FILE);
+    return createHtmlHeader(GITHUB_MARKDOWN_CSS_FILE, GITHUB_MARKDOWN_CSS_CUSTOM_FILE);
   }
   
   /**
    * @param cssFileName
    * @return
    */
-  private static String createHtmlHeader( String cssFileName )
+  private static String createHtmlHeader( String... cssFilenames )
   {
-    InputStreamReader inputStreamReader = new InputStreamReader(ClassLoader.getSystemResourceAsStream(cssFileName));
-    String cssFileNameContents = new BufferedReader(inputStreamReader).lines().collect(Collectors.joining("\n"));
-    
-    return "<!DOCTYPE html>\n" +
+    String htmlHeader = "<!DOCTYPE html>\n" +
       "<html>\n" +
       "<head>\n" +
-      "<style>\n" +
-      cssFileNameContents +
+      "<style>\n";
+    
+    for(String cssFilename : cssFilenames)
+    {
+      InputStreamReader inputStreamReader = new InputStreamReader(ClassLoader.getSystemResourceAsStream(cssFilename));
+      String cssFilenameContent = new BufferedReader(inputStreamReader).lines().collect(Collectors.joining("\n"));
+      htmlHeader += cssFilenameContent;
+    }
+ 
+    return htmlHeader +
       "</style>\n" +
       "</head>\n" +
       "<body class='markdown-body'>\n";

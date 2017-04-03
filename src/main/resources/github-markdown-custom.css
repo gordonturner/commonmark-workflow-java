@@ -1,0 +1,5 @@
+
+/* Prevents code from running off pdf page where the scroll bar isn't an option */
+.markdown-body pre>code {
+  white-space: pre-wrap;
+}

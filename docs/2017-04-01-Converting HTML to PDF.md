@@ -20,8 +20,13 @@ Working Prototype
 - Need to discover how to manage text wrapping
 
 
+Text Wrapping
+-------------
 
+- Fixed, wraps rather then going off page with `white-space: pre-wrap;`
+- In HTML the copied text DOES NOT have new line, which is correct
+- In PDF the copied text DOES have new line, which is NOT correct
 
-
+- Not sure if possible to eliminate new line or at least have character represent new line visually
 
 
