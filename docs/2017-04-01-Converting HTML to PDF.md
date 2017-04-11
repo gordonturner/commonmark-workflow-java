@@ -30,3 +30,7 @@ Text Wrapping
 - Not sure if possible to eliminate new line or at least have character represent new line visually
 
 
+Missing Background Color
+------------------------
+
+- Inline code 
