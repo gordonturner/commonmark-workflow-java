@@ -6,6 +6,7 @@ import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Entities;
 import org.w3c.dom.Document;
 
 import java.io.*;
@@ -44,8 +45,8 @@ public class App {
     
     try {
       URL url = new URL(htmlFilename);
-      org.jsoup.nodes.Document documnet = Jsoup.parse(new File(url.getPath()), "UTF-8");
-      html5Document = DOMBuilder.jsoup2DOM(documnet);
+      org.jsoup.nodes.Document document = Jsoup.parse(new File(url.getPath()), "UTF-8");
+      html5Document = DOMBuilder.jsoup2DOM(document);
     }
     catch (IOException e)
     {
@@ -138,7 +139,7 @@ public class App {
     
       Parser parser = Parser.builder().build();
       Node document = parser.parseReader(fileReader);
-      HtmlRenderer renderer = HtmlRenderer.builder().build();
+      HtmlRenderer renderer = HtmlRenderer.builder().escapeHtml(true).build();
       String rendered = renderer.render(document);
     
       String renderedStyled = createGithubMarkdownHtmlHeader() + rendered + createHtmlFooter();
