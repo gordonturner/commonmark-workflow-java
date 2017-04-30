@@ -4,7 +4,7 @@
 
   <groupId>com.gordonturner.commonmark</groupId>
   <artifactId>commonmark-workflow</artifactId>
-  <version>1.0</version>
+  <version>2.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>commonmark-workflow</name>
@@ -62,6 +62,17 @@
     </dependency>
 
     <!-- END pdf dependencies -->
+
+    <!-- BEGIN Word doc dependencies -->
+
+    <dependency>
+      <groupId>org.docx4j</groupId>
+      <artifactId>docx4j-ImportXHTML</artifactId>
+      <version>3.3.1</version>
+    </dependency>
+
+    <!-- END Word doc dependencies -->
+
 
   </dependencies>
 

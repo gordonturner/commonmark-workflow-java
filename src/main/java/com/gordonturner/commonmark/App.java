@@ -1,16 +1,20 @@
 package com.gordonturner.commonmark;
 
-import com.openhtmltopdf.DOMBuilder;
 import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
+import org.apache.commons.io.FileUtils;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Entities;
-import org.w3c.dom.Document;
+import org.docx4j.Docx4J;
+import org.docx4j.Docx4jProperties;
+import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
+import org.docx4j.convert.out.HTMLSettings;
+import org.docx4j.model.structure.PageSizePaper;
+import org.docx4j.openpackaging.exceptions.Docx4JException;
+import org.docx4j.openpackaging.exceptions.InvalidFormatException;
+import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 
 import java.io.*;
-import java.net.URL;
 import java.util.stream.Collectors;
 
 /**
@@ -21,71 +25,50 @@ public class App {
   public final static String MARKDOWN_EXTENSION = ".md";
   public final static String HTML_EXTENSION = ".html";
   public final static String PDF_EXTENSION = ".pdf";
+  public final static String DOC_EXTENSION = ".doc";
   
   // https://raw.githubusercontent.com/sindresorhus/github-markdown-css/gh-pages/github-markdown.css
   public final static String GITHUB_MARKDOWN_CSS_FILE = "github-markdown.css";
   public final static String GITHUB_MARKDOWN_CSS_CUSTOM_FILE = "github-markdown-custom.css";
   
+  /**
+   * @param args
+   */
   public static void main(String[] args)
   {
-    String htmlFilename = convertCommonmarkToHtml(args[0]);
-    convertHtmlToPdf(htmlFilename);
+  
+    System.out.println(args[0]);
+    System.out.println(args[1]);
+    
+    if(args.length != 2) {
+      printUsage();
+    }
+    {
+      if("-p".equals(args[0]))
+      {
+        String htmlFilename = convertCommonmarkToHtml(args[1]);
+        convertHtmlToPdf(htmlFilename);
+      }
+      else if("-d".equals(args[0]))
+      {
+        String htmlFilename = convertCommonmarkToHtml(args[1]);
+        convertHtmlToDoc(htmlFilename);
+      }
+      else
+      {
+        printUsage();
+      }
+    }
   }
   
   /**
-   * NOTE: Does not work, struggling with `URL url = new URL(htmlFilename);`
    *
-   * @param htmlFilename
-   * @return
    */
-  private static String convertHtml5ToPdf( String htmlFilename)
+  private static void printUsage()
   {
-    String pdfFilename = createPdfOutputFilename(htmlFilename);
-    Document html5Document = null;
-    
-    try {
-      URL url = new URL(htmlFilename);
-      org.jsoup.nodes.Document document = Jsoup.parse(new File(url.getPath()), "UTF-8");
-      html5Document = DOMBuilder.jsoup2DOM(document);
-    }
-    catch (IOException e)
-    {
-      e.printStackTrace();
-    }
-    
-    try
-    {
-      OutputStream outputStream = new FileOutputStream(pdfFilename);
-      
-      try
-      {
-        PdfRendererBuilder builder = new PdfRendererBuilder();
-        builder.withW3cDocument(html5Document, "file://");
-        builder.toStream(outputStream);
-        builder.run();
-      }
-      catch (FileNotFoundException e)
-      {
-        e.printStackTrace();
-      }
-      finally
-      {
-        try
-        {
-          outputStream.close();
-        }
-        catch (IOException e)
-        {
-          // Do nothing
-        }
-      }
-    }
-    catch (Exception e)
-    {
-      e.printStackTrace();
-    }
-    
-    return pdfFilename;
+    System.out.println("Invalid number of args");
+    System.out.println("Usage for pdf: java -jar ./commonmark-workflow-2.0-jar-with-dependencies.jar -p ./readme.md");
+    System.out.println("Usage for doc: java -jar ./commonmark-workflow-2.0-jar-with-dependencies.jar -d ./readme.md");
   }
   
   /**
@@ -99,11 +82,11 @@ public class App {
     try
     {
       OutputStream outputStream = new FileOutputStream(pdfFilename);
-  
+      
       try {
         PdfRendererBuilder builder = new PdfRendererBuilder();
         builder.withFile(new File(htmlFilename));
-    
+        
         builder.toStream(outputStream);
         builder.run();
       } catch (FileNotFoundException e) {
@@ -120,8 +103,80 @@ public class App {
     {
       e.printStackTrace();
     }
-  
+    
     return pdfFilename;
+  }
+  
+  /**
+   * @param htmlFilename
+   * @return
+   */
+  private static String convertHtmlToDoc( String htmlFilename)
+  {
+    String docFilename = createDocOutputFilename(htmlFilename);
+  
+    WordprocessingMLPackage wordMLPackage = null;
+    try
+    {
+      // Default to letter and portrait
+      wordMLPackage = WordprocessingMLPackage.createPackage(PageSizePaper.LETTER, false);
+    }
+    catch (InvalidFormatException e)
+    {
+      e.printStackTrace();
+    }
+  
+    XHTMLImporterImpl XHTMLImporter = new XHTMLImporterImpl(wordMLPackage);
+  
+    String baseURL = "./";
+  
+    
+    
+    String stringFromFile = null;
+    try
+    {
+      stringFromFile = FileUtils.readFileToString(new File(htmlFilename), "UTF-8");
+    }
+    catch (IOException e)
+    {
+      e.printStackTrace();
+    }
+    String unescaped = stringFromFile;
+    
+//    if (stringFromFile.contains("&lt;/") )
+//    {
+//      unescaped = StringEscapeUtils.unescapeHtml(stringFromFile);
+//    }
+    
+    OutputStream fos = null;
+    try
+    {
+      fos = new ByteArrayOutputStream();
+      wordMLPackage.getMainDocumentPart().getContent().addAll( XHTMLImporter.convert(unescaped, baseURL) );
+      
+      HTMLSettings htmlSettings = Docx4J.createHTMLSettings();
+      htmlSettings.setWmlPackage(wordMLPackage);
+      Docx4jProperties.setProperty("docx4j.Convert.Out.HTML.OutputMethodXML", true);
+      Docx4J.toHTML(htmlSettings, fos, Docx4J.FLAG_EXPORT_PREFER_NONXSL);
+      wordMLPackage.save(new File (docFilename));
+    }
+    catch (Docx4JException e)
+    {
+      e.printStackTrace();
+    }
+    finally
+    {
+      try
+      {
+        fos.close();
+      }
+      catch (IOException e)
+      {
+        e.printStackTrace();
+      }
+    }
+  
+    return docFilename;
   }
   
   /**
@@ -188,6 +243,22 @@ public class App {
     else
     {
       return inputHtmlFilename + "." + PDF_EXTENSION;
+    }
+  }
+  
+  /**
+   * @param inputHtmlFilename
+   * @return
+   */
+  private static String createDocOutputFilename(String inputHtmlFilename)
+  {
+    if(inputHtmlFilename.endsWith(HTML_EXTENSION))
+    {
+      return inputHtmlFilename.substring(0, inputHtmlFilename.lastIndexOf(HTML_EXTENSION)) + DOC_EXTENSION;
+    }
+    else
+    {
+      return inputHtmlFilename + "." + DOC_EXTENSION;
     }
   }
   
