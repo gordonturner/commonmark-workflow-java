@@ -1,0 +1,13 @@
+
+/* Prevents code from running off pdf page where the scroll bar isn't an option */
+.markdown-body pre>code {
+  white-space: pre-wrap;
+}
+
+.markdown-body .highlight pre, .markdown-body pre {
+  background-color: #dddfe1;
+}
+
+.markdown-body code {
+  background-color: #dddfe1;
+}

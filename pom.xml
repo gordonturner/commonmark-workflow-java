@@ -8,10 +8,18 @@
   <packaging>jar</packaging>
 
   <name>commonmark-workflow</name>
-  <url>http://maven.apache.org</url>
+
+  <scm>
+    <!-- NOTE: Add server configuration for id `github.com` to settings.xml -->
+    <connection>scm:git:git@github.com/gordonturner:commonmark-workflow.git</connection>
+    <url>scm:git:git@github.com:gordonturner/commonmark-workflow.git</url>
+    <developerConnection>scm:git:git@github.com:gordonturner/commonmark-workflow.git</developerConnection>
+    <tag>master</tag>
+  </scm>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <openhtml.version>0.0.1-RC9</openhtml.version>
   </properties>
 
   <dependencies>
@@ -29,9 +37,43 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+
+    <!-- BEGIN pdf dependencies -->
+
+    <dependency>
+      <!-- ALWAYS required. -->
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-core</artifactId>
+      <version>${openhtml.version}</version>
+    </dependency>
+
+    <dependency>
+      <!-- Required for PDF output. -->
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-pdfbox</artifactId>
+      <version>${openhtml.version}</version>
+    </dependency>
+
+    <dependency>
+      <!-- Optional, leave out if you do not need HTML5 parsing support. -->
+      <groupId>com.openhtmltopdf</groupId>
+      <artifactId>openhtmltopdf-jsoup-dom-converter</artifactId>
+      <version>${openhtml.version}</version>
+    </dependency>
+
+    <!-- END pdf dependencies -->
+
   </dependencies>
 
   <build>
+
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+
     <plugins>
 
       <plugin>
@@ -42,6 +84,12 @@
           <source>1.8</source>
           <target>1.8</target>
         </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-scm-plugin</artifactId>
+        <version>1.9</version>
       </plugin>
 
       <plugin>
@@ -68,8 +116,8 @@
         </executions>
       </plugin>
     </plugins>
-  </build>
 
+  </build>
 
   <repositories>
 
