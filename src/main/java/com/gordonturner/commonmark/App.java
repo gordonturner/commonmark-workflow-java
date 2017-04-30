@@ -1,10 +1,16 @@
 package com.gordonturner.commonmark;
 
+import com.openhtmltopdf.DOMBuilder;
+import com.openhtmltopdf.pdfboxout.PdfRendererBuilder;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Entities;
+import org.w3c.dom.Document;
 
 import java.io.*;
+import java.net.URL;
 import java.util.stream.Collectors;
 
 /**
@@ -17,23 +23,127 @@ public class App {
   public final static String PDF_EXTENSION = ".pdf";
   
   // https://raw.githubusercontent.com/sindresorhus/github-markdown-css/gh-pages/github-markdown.css
-  public final static String GITHUB_MARKDOWN_CSS_FILE = "github-markdown.css" ;
+  public final static String GITHUB_MARKDOWN_CSS_FILE = "github-markdown.css";
+  public final static String GITHUB_MARKDOWN_CSS_CUSTOM_FILE = "github-markdown-custom.css";
   
   public static void main(String[] args)
   {
+    String htmlFilename = convertCommonmarkToHtml(args[0]);
+    convertHtmlToPdf(htmlFilename);
+  }
+  
+  /**
+   * NOTE: Does not work, struggling with `URL url = new URL(htmlFilename);`
+   *
+   * @param htmlFilename
+   * @return
+   */
+  private static String convertHtml5ToPdf( String htmlFilename)
+  {
+    String pdfFilename = createPdfOutputFilename(htmlFilename);
+    Document html5Document = null;
+    
+    try {
+      URL url = new URL(htmlFilename);
+      org.jsoup.nodes.Document document = Jsoup.parse(new File(url.getPath()), "UTF-8");
+      html5Document = DOMBuilder.jsoup2DOM(document);
+    }
+    catch (IOException e)
+    {
+      e.printStackTrace();
+    }
     
     try
     {
-      FileReader fileReader = new FileReader(args[0]);
-      FileWriter fileWriter = new FileWriter(createHtmlOutputFilename(args[0]));
+      OutputStream outputStream = new FileOutputStream(pdfFilename);
       
+      try
+      {
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withW3cDocument(html5Document, "file://");
+        builder.toStream(outputStream);
+        builder.run();
+      }
+      catch (FileNotFoundException e)
+      {
+        e.printStackTrace();
+      }
+      finally
+      {
+        try
+        {
+          outputStream.close();
+        }
+        catch (IOException e)
+        {
+          // Do nothing
+        }
+      }
+    }
+    catch (Exception e)
+    {
+      e.printStackTrace();
+    }
+    
+    return pdfFilename;
+  }
+  
+  /**
+   * @param htmlFilename
+   * @return
+   */
+  private static String convertHtmlToPdf( String htmlFilename)
+  {
+    String pdfFilename = createPdfOutputFilename(htmlFilename);
+    
+    try
+    {
+      OutputStream outputStream = new FileOutputStream(pdfFilename);
+  
+      try {
+        PdfRendererBuilder builder = new PdfRendererBuilder();
+        builder.withFile(new File(htmlFilename));
+    
+        builder.toStream(outputStream);
+        builder.run();
+      } catch (FileNotFoundException e) {
+        e.printStackTrace();
+      } finally {
+        try {
+          outputStream.close();
+        } catch (IOException e) {
+          // Do nothing
+        }
+      }
+    }
+    catch (Exception e)
+    {
+      e.printStackTrace();
+    }
+  
+    return pdfFilename;
+  }
+  
+  /**
+   * @param commonmarkFilename
+   * @return
+   */
+  private static String convertCommonmarkToHtml( String commonmarkFilename)
+  {
+    String htmlFilename = createHtmlOutputFilename(commonmarkFilename);
+    
+    try
+    {
+      FileReader fileReader = new FileReader(commonmarkFilename);
+      FileWriter fileWriter = new FileWriter(htmlFilename);
+    
       Parser parser = Parser.builder().build();
       Node document = parser.parseReader(fileReader);
-      HtmlRenderer renderer = HtmlRenderer.builder().build();
+      HtmlRenderer renderer = HtmlRenderer.builder().escapeHtml(true).build();
       String rendered = renderer.render(document);
-      
+    
       String renderedStyled = createGithubMarkdownHtmlHeader() + rendered + createHtmlFooter();
-      
+    
       System.out.println( renderedStyled );
       fileWriter.write(renderedStyled);
       fileWriter.close();
@@ -45,6 +155,8 @@ public class App {
     {
       e.printStackTrace();
     }
+    
+    return htmlFilename;
   }
   
   /**
@@ -64,18 +176,18 @@ public class App {
   }
   
   /**
-   * @param inputMarkdownFilename
+   * @param inputHtmlFilename
    * @return
    */
-  private static String createPdfOutputFilename(String inputMarkdownFilename)
+  private static String createPdfOutputFilename(String inputHtmlFilename)
   {
-    if(inputMarkdownFilename.endsWith(MARKDOWN_EXTENSION))
+    if(inputHtmlFilename.endsWith(HTML_EXTENSION))
     {
-      return inputMarkdownFilename.substring(0, inputMarkdownFilename.lastIndexOf(MARKDOWN_EXTENSION)) + HTML_EXTENSION;
+      return inputHtmlFilename.substring(0, inputHtmlFilename.lastIndexOf(HTML_EXTENSION)) + PDF_EXTENSION;
     }
     else
     {
-      return inputMarkdownFilename + "." + PDF_EXTENSION;
+      return inputHtmlFilename + "." + PDF_EXTENSION;
     }
   }
   
@@ -84,23 +196,28 @@ public class App {
    */
   private static String createGithubMarkdownHtmlHeader()
   {
-    return createHtmlHeader(GITHUB_MARKDOWN_CSS_FILE);
+    return createHtmlHeader(GITHUB_MARKDOWN_CSS_FILE, GITHUB_MARKDOWN_CSS_CUSTOM_FILE);
   }
   
   /**
    * @param cssFileName
    * @return
    */
-  private static String createHtmlHeader( String cssFileName )
+  private static String createHtmlHeader( String... cssFilenames )
   {
-    InputStreamReader inputStreamReader = new InputStreamReader(ClassLoader.getSystemResourceAsStream(cssFileName));
-    String cssFileNameContents = new BufferedReader(inputStreamReader).lines().collect(Collectors.joining("\n"));
-    
-    return "<!DOCTYPE html>\n" +
+    String htmlHeader = "<!DOCTYPE html>\n" +
       "<html>\n" +
       "<head>\n" +
-      "<style>\n" +
-      cssFileNameContents +
+      "<style>\n";
+    
+    for(String cssFilename : cssFilenames)
+    {
+      InputStreamReader inputStreamReader = new InputStreamReader(ClassLoader.getSystemResourceAsStream(cssFilename));
+      String cssFilenameContent = new BufferedReader(inputStreamReader).lines().collect(Collectors.joining("\n"));
+      htmlHeader += cssFilenameContent;
+    }
+ 
+    return htmlHeader +
       "</style>\n" +
       "</head>\n" +
       "<body class='markdown-body'>\n";
