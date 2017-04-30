@@ -11,3 +11,7 @@
 .markdown-body code {
   background-color: #dddfe1;
 }
+
+.markdown-body h1 {
+  border-bottom: none;
+}
