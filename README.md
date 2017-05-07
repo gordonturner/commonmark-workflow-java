@@ -7,13 +7,13 @@ Running Release
 - Run jar release, for pdf:
 
 ```
-java -jar ./commonmark-workflow-2.0-jar-with-dependencies.jar -p ./readme.md");
+java -jar ./commonmark-workflow-2.0-jar-with-dependencies.jar -p ./readme.md
 ```
 
 - Run jar release, for doc:
 
 ```
-java -jar ./commonmark-workflow-2.0-jar-with-dependencies.jar -d ./readme.md");
+java -jar ./commonmark-workflow-2.0-jar-with-dependencies.jar -d ./readme.md
 ```
 
 
